@@ -1,0 +1,240 @@
+/* src/index.css fayliga qo'shing */
+
+/* Asosiy fon va konteyner dizayni */
+.dashboard-container {
+  max-width: 1050px;
+  margin: 0 auto;
+  background: #251616; /* To'q shokolad rangli blok */
+  padding: 35px;
+  border-radius: 28px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7), 
+              inset 0 1px 2px rgba(255, 255, 255, 0.05);
+  border: 1px solid #362121;
+}
+
+/* Sarlavha qismi */
+h1 {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Qidiruv inputi dizayni */
+.search-input {
+  background: rgba(17, 10, 10, 0.6); /* Ichki qorong'u fon */
+  border: 1px solid #4a2f2f;
+  padding: 12px 20px;
+  border-radius: 14px;
+  color: #fff;
+  font-size: 15px;
+  width: 320px;
+  outline: none;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+  transition: all 0.2s ease-in-out;
+}
+
+.search-input:focus {
+  border-color: #ffb703; /* Fokus bo'lganda oltin rang */
+  box-shadow: 0 0 10px rgba(255, 183, 3, 0.2), inset 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.search-input::placeholder {
+  color: #705252; /* Qulupnay-shokolad rangli placeholder */
+}
+
+/* Yangi kun boshlash tugmasi */
+.btn-start-day {
+  background: linear-gradient(135deg, #a82431 0%, #801620 100%); /* To'q qulupnay gradient */
+  border: none;
+  padding: 12px 26px;
+  border-radius: 14px;
+  color: #fff;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 15px;
+  box-shadow: 0 6px 20px rgba(168, 36, 49, 0.3);
+  transition: all 0.2s ease;
+}
+
+.btn-start-day:hover {
+  background: linear-gradient(135deg, #bd2d3b 0%, #911c27 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(168, 36, 49, 0.5);
+}
+
+.btn-start-day:active {
+  transform: translateY(1px);
+}
+
+/* Kartalar ichidagi matnlar va elementlar uchun */
+.card-date {
+  color: #a88f8f;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.card-count {
+  color: #ffffff;
+  font-size: 26px;
+  font-weight: 600;
+  margin: 0 0 15px 0;
+}
+
+
+/* Modal foni - yanada qorong'u va chuqurroq */
+.custom-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(15px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+/* Modal qutisi - "Soft UI" uslubida */
+.custom-modal-box {
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 32px;
+  border-radius: 24px;
+  width: 90%;
+  max-width: 420px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.custom-modal-box h3 {
+  margin: 0 0 20px 0;
+  font-size: 20px;
+  color: #f4f4f5;
+  font-weight: 600;
+}
+
+/* Inputlarni yanada chiroyli qildik */
+.modal-input {
+  width: 100%;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 15px;
+  outline: none;
+  transition: border 0.3s;
+  box-sizing: border-box;
+}
+
+.modal-input:focus {
+  border-color: #ffb703;
+}
+
+/* Tugmalar - "Modern Gradient" uslubida */
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.btn-save {
+  flex: 1;
+  padding: 14px;
+  background: linear-gradient(135deg, #ffb703, #fb8500);
+  border: none;
+  border-radius: 12px;
+  color: #000;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.btn-save:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+.btn-cancel {
+  flex: 1;
+  padding: 14px;
+  background: #27272a;
+  border: none;
+  color: #a1a1aa;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-cancel:hover {
+  color: #fff;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* --- Admin Panel uchun qo'shimcha dizaynlar --- */
+
+/* Kategoriyalar bo'limi */
+.category-section {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Mahsulot kartasi (item card) */
+.menu-item-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #27272a;
+  padding: 15px 20px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  transition: transform 0.2s;
+}
+
+.menu-item-card:hover {
+  background: #323236;
+}
+
+/* Tahrirlash va O'chirish tugmalari */
+.action-btn {
+  background: #3f3f46;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  margin-left: 8px;
+  transition: background 0.2s;
+}
+
+.action-btn:hover {
+  background: #52525b;
+}
+
+/* "+" tugmasi (Yangi mahsulot qo'shish) */
+.add-btn {
+  width: 100%;
+  padding: 15px;
+  margin-top: 10px;
+  background: transparent;
+  border: 2px dashed #4a2f2f;
+  color: #ffb703;
+  border-radius: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.add-btn:hover {
+  background: #ffb703;
+  color: #000;
+  border-style: solid;
+}
