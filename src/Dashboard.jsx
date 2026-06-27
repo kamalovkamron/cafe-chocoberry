@@ -111,38 +111,69 @@ export default function App() {
 
   return (
     <div className="app-wrapper">
-      <header style={{ textAlign: 'center', marginBottom: '30px' }}><h1 style={{ color: '#fcd34d', fontSize: '26px', fontWeight: 'bold' }}>🍓 Choco Berry Cafe Dashboard</h1></header>
+      
+      {/* YANGI TO'G'RILANGAN HEADER PANEL */}
+      <header style={{ position: 'relative', textAlign: 'center', marginBottom: '30px', paddingTop: '10px' }}>
+        <h1 style={{ color: '#fcd34d', fontSize: '26px', fontWeight: 'bold', margin: 0 }}>
+          🍓 Choco Berry Cafe Dashboard
+        </h1>
+        <button 
+          onClick={() => { window.location.href = '/admin'; }} // Admin sahifangiz yo'li
+          style={{ 
+            position: 'absolute', 
+            right: '10px', 
+            top: '50%', 
+            transform: 'translateY(-50%)',
+            background: 'rgba(252, 211, 77, 0.1)', 
+            border: '1px solid #fcd34d', 
+            color: '#fcd34d', 
+            padding: '8px 16px', 
+            borderRadius: '10px', 
+            fontSize: '14px', 
+            fontWeight: '500', 
+            cursor: 'pointer', 
+            zIndex: 999, // Boshqa elementlar ustida turishi uchun
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            transition: 'all 0.2s'
+          }}
+          onMouseOver={(e) => e.currentTarget.style.background = 'rgba(252, 211, 77, 0.2)'}
+          onMouseOut={(e) => e.currentTarget.style.background = 'rgba(252, 211, 77, 0.1)'}
+        >
+          ⚙️ Admin Panel
+        </button>
+      </header>
 
       {/* ARXIVNI KO'RSATISH (HISTORY VIEW) */}
-{historyView ? (
-  <div className="dashboard-panel">
-    <button className="btn-neon" onClick={() => setHistoryView(null)}>⬅️ Orqaga</button>
-    <h2>Sana: {historyView.date}</h2>
-    
-    {/* FOYDA VA XARAJAT BLOKI */}
-    <div style={{ background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '12px', marginBottom: '20px' }}>
-      <div style={{ color: '#aaa' }}>Jami tushum: {historyView.totalRevenue?.toLocaleString()} so'm</div>
-      <div style={{ color: '#ff4d4d' }}>Jami xarajat: {Object.values(historyView.orders || {}).reduce((sum, o) => sum + (o.totalCost || 0), 0).toLocaleString()} so'm</div>
-      <div style={{ color: '#51cf66', fontWeight: 'bold', fontSize: '18px' }}>
-        Sof foyda: {(historyView.totalRevenue - Object.values(historyView.orders || {}).reduce((sum, o) => sum + (o.totalCost || 0), 0)).toLocaleString()} so'm
-      </div>
-    </div>
-
-    <div className="shift-orders-grid">
-      {historyView.orders && Object.keys(historyView.orders).map(key => {
-        const order = historyView.orders[key];
-        return (
-          <div key={key} className="inner-order-card" style={{ padding: '15px' }}>
-            <h4 style={{ color: '#ffb703' }}>{order.title}</h4>
-            {order.items?.map((item, i) => <div key={i}>{item.name} ({item.qty}x)</div>)}
-            <div style={{ marginTop: '10px', color: '#51cf66' }}>Foyda: {(order.totalPrice - order.totalCost).toLocaleString()} so'm</div>
-            <div style={{ fontWeight: 'bold' }}>Jami: {order.totalPrice?.toLocaleString()} so'm</div>
+      {historyView ? (
+        <div className="dashboard-panel">
+          <button className="btn-neon" onClick={() => setHistoryView(null)}>⬅️ Orqaga</button>
+          <h2>Sana: {historyView.date}</h2>
+          
+          <div style={{ background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '12px', marginBottom: '20px' }}>
+            <div style={{ color: '#aaa' }}>Jami tushum: {historyView.totalRevenue?.toLocaleString()} so'm</div>
+            <div style={{ color: '#ff4d4d' }}>Jami xarajat: {Object.values(historyView.orders || {}).reduce((sum, o) => sum + (o.totalCost || 0), 0).toLocaleString()} so'm</div>
+            <div style={{ color: '#51cf66', fontWeight: 'bold', fontSize: '18px' }}>
+              Sof foyda: {(historyView.totalRevenue - Object.values(historyView.orders || {}).reduce((sum, o) => sum + (o.totalCost || 0), 0)).toLocaleString()} so'm
+            </div>
           </div>
-        );
-      })}
-    </div>
-  </div>
-) : (
+
+          <div className="shift-orders-grid">
+            {historyView.orders && Object.keys(historyView.orders).map(key => {
+              const order = historyView.orders[key];
+              return (
+                <div key={key} className="inner-order-card" style={{ padding: '15px' }}>
+                  <h4 style={{ color: '#ffb703' }}>{order.title}</h4>
+                  {order.items?.map((item, i) => <div key={i}>{item.name} ({item.qty}x)</div>)}
+                  <div style={{ marginTop: '10px', color: '#51cf66' }}>Foyda: {(order.totalPrice - order.totalCost).toLocaleString()} so'm</div>
+                  <div style={{ fontWeight: 'bold' }}>Jami: {order.totalPrice?.toLocaleString()} so'm</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
         <>
           {!activeShift && (
             <div className="dashboard-panel">
@@ -190,7 +221,6 @@ export default function App() {
       {isMenuModalOpen && (
         <div className="custom-modal-backdrop">
           <div className="custom-modal-box">
-             {/* Menyu tanlash qismi o'zgarishsiz qoldi */}
              <div style={{ maxHeight: '380px', overflowY: 'auto' }}>
               {Object.entries(menu).map(([category, products]) => (
                 <div key={category} style={{ marginBottom: '22px' }}>
