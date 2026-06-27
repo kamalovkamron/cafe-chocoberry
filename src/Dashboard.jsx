@@ -118,7 +118,7 @@ export default function App() {
           🍓 Choco Berry Cafe Dashboard
         </h1>
         <button 
-          onClick={() => { window.location.href = '/admin'; }} // Admin sahifangiz yo'li
+          onClick={() => { window.location.href = '/adminpanel'; }} // Admin sahifangiz yo'li
           style={{ 
             position: 'absolute', 
             right: '10px', 
