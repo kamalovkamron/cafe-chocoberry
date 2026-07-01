@@ -230,56 +230,160 @@ export default function App() {
         </>
       )}
 
-      {isMenuModalOpen && (
-        <div 
-          className="custom-modal-backdrop" 
-          onClick={closeModal} 
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '10px' }}
-        >
-          <div 
-            ref={modalRef}
-            className="custom-modal-box" 
-            onClick={(e) => e.stopPropagation()} 
-            style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '16px', width: '100%', maxWidth: '450px', boxSizing: 'border-box', position: 'relative' }}
-          >
-            <div 
-              className="modal-swipe-handle"
-              onClick={closeModal}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-              style={{ width: '50px', height: '10px', background: 'rgba(255,255,255,0.2)', borderRadius: '5px', margin: '-6px auto 15px auto', cursor: 'pointer' }}
-            />
 
-            <div style={{ maxHeight: '60vh', overflowY: 'auto', marginBottom: '15px', paddingRight: '4px' }}>
-              {Object.entries(menu).map(([category, products]) => (
-                <div key={category} style={{ marginBottom: '16px' }}>
-                  <h4 style={{ textTransform: 'uppercase', fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: '0 0 8px 0', letterSpacing: '1px' }}>{category}</h4>
-                  {products.map(product => {
-                    const qty = basket.find(item => item.id === product.id)?.qty || 0;
-                    return (
-                      <div key={product.id} className="menu-item-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                        <div style={{ flex: 1, paddingRight: '10px' }}>
-                          <div style={{ fontSize: '14px', color: '#fff' }}>{product.name}</div>
-                          <div style={{ color: '#ffb703', fontSize: '13px' }}>{Number(product.sellPrice || 0).toLocaleString()} so'm</div>
+{isMenuModalOpen && (
+  <div 
+    className="custom-modal-backdrop" 
+    onClick={() => { setSearchTerm(''); closeModal(); }} /* 👈 Oyna yopilganda qidiruv matni ham tozalanadi */
+    style={{ 
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+      background: 'rgba(0,0,0,0.75)', display: 'flex', 
+      alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '12px' 
+    }}
+  >
+    <div 
+      ref={modalRef}
+      className="custom-modal-box glass-effect" 
+      onClick={(e) => e.stopPropagation()} 
+      style={{ 
+        background: '#16161a', border: '1px solid rgba(255,255,255,0.08)', 
+        borderRadius: '20px', padding: '18px', width: '100%', maxWidth: '440px', 
+        boxSizing: 'border-box', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.5)'
+      }}
+    >
+      {/* 📱 Sensorli yopish chiziqchasi */}
+      <div 
+        className="modal-swipe-handle"
+        onClick={() => { setSearchTerm(''); closeModal(); }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{ 
+          width: '45px', height: '6px', background: 'rgba(255,255,255,0.15)', 
+          borderRadius: '10px', margin: '-8px auto 14px auto', cursor: 'pointer' 
+        }}
+      />
+
+      {/* 🔍 Jonli Qidiruv Qatori */}
+      <div style={{ position: 'relative', marginBottom: '16px' }}>
+        <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)', fontSize: '15px' }}>🔍</span>
+        <input 
+          type="text"
+          placeholder="Mahsulot qidirish..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ 
+            width: '100%', boxSizing: 'border-box', padding: '11px 12px 11px 36px', 
+            borderRadius: '12px', background: 'rgba(255,255,255,0.04)', 
+            border: '1px solid rgba(255,255,255,0.08)', color: '#fff', 
+            fontSize: '14px', outline: 'none', transition: 'all 0.2s'
+          }}
+          onFocus={(e) => e.target.style.borderColor = '#ffb703'}
+          onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+        />
+        {searchTerm && (
+          <button 
+            onClick={() => setSearchTerm('')}
+            style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '14px' }}
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
+      {/* 🍰 Mahsulotlar Ro'yxati */}
+      <div style={{ maxHeight: '55vh', overflowY: 'auto', marginBottom: '16px', paddingRight: '2px' }}>
+        {Object.entries(menu).map(([category, products]) => {
+          
+          {/* ✨ Katta va kichik harflarni bir xil qiluvchi asosiy filtr qismi */}
+          const filteredProducts = products.filter(p => 
+            p.name && p.name.toLowerCase().includes(searchTerm.toLowerCase())
+          );
+
+          if (filteredProducts.length === 0) return null;
+
+          return (
+            <div key={category} style={{ marginBottom: '16px' }}>
+              <h4 style={{ textTransform: 'uppercase', fontSize: '11px', color: '#ffb703', margin: '0 0 10px 4px', letterSpacing: '1.5px', fontWeight: '600', opacity: 0.85 }}>
+                {category}
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {filteredProducts.map(product => {
+                  const qty = basket.find(item => item.id === product.id)?.qty || 0;
+                  return (
+                    <div 
+                      key={product.id} 
+                      className="menu-item-row" 
+                      style={{ 
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+                        padding: '12px', background: 'rgba(255,255,255,0.02)', 
+                        border: '1px solid rgba(255,255,255,0.04)', borderRadius: '12px'
+                      }}
+                    >
+                      <div style={{ flex: 1, paddingRight: '12px' }}>
+                        <div style={{ fontSize: '14px', color: '#f8f9fa', fontWeight: '500', marginBottom: '3px', textTransform: 'capitalize' }}>
+                          {product.name}
                         </div>
-                        <div className="counter-tools" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <button className="btn-circle" onClick={() => handleToggleCount(product, -1)} style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)', background: 'none', color: '#fff', cursor: 'pointer' }}>-</button>
-                          <span style={{ minWidth: '20px', textAlign: 'center', fontSize: '14px' }}>{qty}</span>
-                          <button className="btn-circle plus-active" onClick={() => handleToggleCount(product, 1)} style={{ width: '28px', height: '28px', borderRadius: '50%', border: 'none', background: '#ffb703', color: '#000', cursor: 'pointer', fontWeight: 'bold' }}>+</button>
+                        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', fontWeight: '500' }}>
+                          {Number(product.sellPrice || 0).toLocaleString()} so'm
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              ))}
+
+                      {/* Tugmalar paneli */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(0,0,0,0.2)', padding: '4px 6px', borderRadius: '25px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                        <button 
+                          className="btn-circle" 
+                          onClick={() => handleToggleCount(product, -1)} 
+                          style={{ 
+                            width: '28px', height: '28px', borderRadius: '50%', border: 'none', 
+                            background: qty > 0 ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)', 
+                            color: qty > 0 ? '#fff' : 'rgba(255,255,255,0.2)', cursor: qty > 0 ? 'pointer' : 'default',
+                            fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                          }}
+                          disabled={qty === 0}
+                        >
+                          -
+                        </button>
+                        <span style={{ minWidth: '18px', textAlign: 'center', fontSize: '14px', fontWeight: '600', color: qty > 0 ? '#ffb703' : '#666' }}>
+                          {qty}
+                        </span>
+                        <button 
+                          className="btn-circle plus-active" 
+                          onClick={() => handleToggleCount(product, 1)} 
+                          style={{ 
+                            width: '28px', height: '28px', borderRadius: '50%', border: 'none', 
+                            background: '#ffb703', color: '#000', cursor: 'pointer', 
+                            fontSize: '16px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                          }}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <button className="btn-neon" onClick={handleSaveOrder} style={{ width: '100%', padding: '12px', borderRadius: '10px' }}>
-              {editingOrderKey ? 'Yangilash' : "Qo'shish"}
-            </button>
-          </div>
-        </div>
-      )}
+          );
+        })}
+      </div>
+
+      {/* Saqlash tugmasi */}
+      <button 
+        className="btn-neon" 
+        onClick={() => { setSearchTerm(''); handleSaveOrder(); }} 
+        style={{ 
+          width: '100%', padding: '13px', borderRadius: '12px', 
+          background: '#ffb703', color: '#000', border: 'none', 
+          fontSize: '15px', fontWeight: '700', cursor: 'pointer',
+          boxShadow: '0 4px 12px rgba(255,183,3,0.2)'
+        }}
+      >
+        {editingOrderKey ? 'Savatni Yangilash' : "Buyurtmaga Qo'shish"}
+      </button>
+    </div>
+  </div>
+)}
     </div>
   );
 }
