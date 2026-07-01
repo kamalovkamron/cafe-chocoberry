@@ -238,3 +238,195 @@ h1 {
   color: #000;
   border-style: solid;
 }
+/* ==========================================================================
+   1. GLOBAL & SAFE AREA SETTINGS (iPhone Ekran Himoyalari)
+   ========================================================================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent; /* Mobil bosilgandagi ko'k fonni yo'qotadi */
+}
+
+body {
+  background-color: #0d0d0d;
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Pro Max seriyalari uchun asosiy konteyner wrapper */
+.app-wrapper {
+  width: 100%;
+  max-width: 100vw;
+  margin: 0 auto;
+  box-sizing: border-box;
+  
+  /* iPhone Dynamic Island va Pastki chiziqcha xavfsizlik zonalari */
+  padding-top: calc(env(safe-area-inset-top) + 20px) !important;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 20px) !important;
+  padding-left: calc(env(safe-area-inset-left) + 16px) !important;
+  padding-right: calc(env(safe-area-inset-right) + 16px) !important;
+}
+
+/* ==========================================================================
+   2. GRID MATRIX (Katta ekranlar uchun default)
+   ========================================================================== */
+.cards-grid, .shift-orders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+
+.nav-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+/* ==========================================================================
+   3. 📱 IPHONE 14 PRO MAX / 15 PRO MAX / 16 PRO MAX / 17 PRO MAX MOSLASHUVI
+   (Kengligi 440px gacha bo'lgan va baland flagman ekranlar uchun maxsus)
+   ========================================================================== */
+@media screen and (max-width: 440px) {
+  /* Header Moslashuvi */
+  .app-header, .admin-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    text-align: center;
+    gap: 14px !important;
+    margin-bottom: 24px !important;
+  }
+
+  .app-header h1, .admin-header h1 {
+    font-size: 24px !important;
+    letter-spacing: -0.5px;
+  }
+
+  /* Qidiruv satri va tugmani Pro Max uchun to'liq eniga cho'zish */
+  .nav-row {
+    flex-direction: column !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+
+  .search-box-neon, .nav-row button, .btn-neon {
+    width: 100% !important;
+    height: 52px !important; /* iOS standartidagi qulay tugma balandligi */
+    font-size: 16px !important;
+    border-radius: 12px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Gridlarni 1 ta ustun qilish - Siqilishning oldini oladi */
+  .cards-grid, .shift-orders-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  /* Admin paneldagi va asosiy sahifadagi kartochkalar */
+  .order-card, .inner-order-card, .menu-item-card {
+    padding: 18px 16px !important; /* Kattaroq ekran uchun ichki joy */
+    border-radius: 16px !important;
+  }
+
+  /* ==========================================================================
+     4. IPHONE PRO MAX UCHUN "NATIVE BOTTOM SHEET" MODAL OYNASI
+     ========================================================================== */
+  .custom-modal-backdrop {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    backdrop-filter: blur(15px) !important; /* Premium iOS effekti */
+    display: flex !important;
+    align-items: flex-end !important; /* Modalni pastga yopishtiramiz */
+    justify-content: center !important;
+    z-index: 9999 !important;
+    padding: 0 !important;
+  }
+
+  .custom-modal-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    background: #1c1c1e !important; /* Apple Dark Mode foni */
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-bottom: none !important;
+    /* Faqat tepa qismini yumaloq qilamiz */
+    border-radius: 24px 24px 0 0 !important; 
+    padding: 24px 20px !important;
+    
+    /* iPhone Home Barni yopib qo'ymaslik uchun maxsus padding */
+    padding-bottom: calc(env(safe-area-inset-bottom) + 20px) !important;
+    
+    margin: 0 !important;
+    position: relative !important;
+    animation: iosSlideUp 0.35s cubic-bezier(0.15, 1, 0.3, 1) forwards !important;
+  }
+
+  /* Tepasiga xuddi Apple ilovalaridagidek kichik chiziqcha (Handle) qo'shish */
+  .custom-modal-box::before {
+    content: "" !important;
+    display: block !important;
+    width: 40px !important;
+    height: 5px !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 3px !important;
+    margin: -12px auto 20px auto !important;
+  }
+
+  /* Pro Max ekran balandligiga moslab kontent joyini kengaytiramiz */
+  .custom-modal-box > div:first-of-type {
+    max-height: 60svh !important; /* Dynamic viewport balandligi */
+    overflow-y: auto !important;
+    padding-right: 2px !important;
+    -webkit-overflow-scrolling: touch; /* Silliq iOS skrolli */
+  }
+
+  /* Menu elementlari qatori */
+  .menu-item-row {
+    padding: 14px 0 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  }
+
+  /* Plyus-minus tugmalari barmoq uchun yirikroq va qulay */
+  .counter-tools {
+    gap: 14px !important;
+  }
+
+  .btn-circle {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+}
+
+/* Kompyuter va noutbuklar uchun hover effektlar */
+@media screen and (min-width: 441px) {
+  .btn-neon:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+  }
+  .order-card:hover {
+    border-color: rgba(255, 183, 3, 0.3) !important;
+  }
+}
+
+/* iOS uslubidagi chiroyli chiqish animatsiyasi */
+@keyframes iosSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}

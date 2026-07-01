@@ -3,7 +3,7 @@ import { db } from './firebase';
 import { ref, onValue, set, push, remove, serverTimestamp } from 'firebase/database';
 
 // ----------------------------------------------------
-// 1. ORDER CARD KOMPONENTI (Ko'zcha funksiyasi bilan)
+// 1. ORDER CARD KOMPONENTI (Telefonga moslashtirilgan)
 // ----------------------------------------------------
 function OrderCard({ data, onOpenHistory }) {
   const totalAmount = data.totalRevenue || 0;
@@ -11,19 +11,29 @@ function OrderCard({ data, onOpenHistory }) {
   const netProfit = totalAmount - totalCost;
 
   return (
-    <div className="order-card" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '140px' }}>
+    <div className="order-card" style={{ 
+      background: 'rgba(255,255,255,0.03)', 
+      border: '1px solid rgba(255,255,255,0.08)', 
+      borderRadius: '18px', 
+      padding: '16px', // Mobil uchun padding biroz kamaytirildi
+      display: 'flex', 
+      flexDirection: 'column', 
+      justifyContent: 'space-between', 
+      minHeight: '130px' 
+    }}>
       <div>
-        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', marginBottom: '8px' }}>{data.date}</div>
-        <h3 style={{ margin: 0, fontSize: '22px', fontWeight: '500' }}>{data.orderCount || 0}ta zakaz</h3>
+        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', marginBottom: '6px' }}>{data.date}</div>
+        <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '500' }}>{data.orderCount || 0}ta zakaz</h3>
       </div>
       
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '15px' }}>
+      {/* Mobil ekranda elementlar bir-birining ostiga tushishi uchun flex-wrap qo'shildi */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', flexWrap: 'wrap', gap: '8px' }}>
         <div style={{ color: '#51cf66', fontSize: '13px', fontWeight: '600' }}>Foyda: {netProfit.toLocaleString()}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '13px', fontWeight: '600', color: '#ffb703', background: 'rgba(255,183,3,0.08)', padding: '5px 10px', borderRadius: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '600', color: '#ffb703', background: 'rgba(255,183,3,0.08)', padding: '4px 8px', borderRadius: '8px' }}>
             {totalAmount.toLocaleString()} so'm
           </span>
-          <button onClick={() => onOpenHistory(data)} style={{ background: 'none', border: '1px solid #ffb703', color: '#ffb703', width: '34px', height: '34px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>👁️</button>
+          <button onClick={() => onOpenHistory(data)} style={{ background: 'none', border: '1px solid #ffb703', color: '#ffb703', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>👁️</button>
         </div>
       </div>
     </div>
@@ -110,20 +120,23 @@ export default function App() {
   };
 
   return (
-    <div className="app-wrapper">
+    <div className="app-wrapper" style={{ padding: '10px', maxWidth: '1200px', margin: '0 auto' }}>
       
-      {/* YANGI TO'G'RILANGAN HEADER PANEL */}
-      <header style={{ position: 'relative', textAlign: 'center', marginBottom: '30px', paddingTop: '10px' }}>
-        <h1 style={{ color: '#fcd34d', fontSize: '26px', fontWeight: 'bold', margin: 0 }}>
-          🍓 Choco Berry Cafe Dashboard
+      {/* HEADER PANEL (Mobil qurilmalarda chiroyli chiqishi uchun o'zgartirildi) */}
+      <header className="app-header" style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center', 
+        gap: '15px', 
+        marginBottom: '20px', 
+        paddingTop: '10px' 
+      }}>
+        <h1 style={{ color: '#fcd34d', fontSize: '22px', fontWeight: 'bold', margin: 0, textAlign: 'center' }}>
+          🍓 Choco Berry Dashboard
         </h1>
         <button 
-          onClick={() => { window.location.href = '/adminpanel'; }} // Admin sahifangiz yo'li
+          onClick={() => { window.location.href = '/adminpanel'; }}
           style={{ 
-            position: 'absolute', 
-            right: '10px', 
-            top: '50%', 
-            transform: 'translateY(-50%)',
             background: 'rgba(252, 211, 77, 0.1)', 
             border: '1px solid #fcd34d', 
             color: '#fcd34d', 
@@ -132,14 +145,11 @@ export default function App() {
             fontSize: '14px', 
             fontWeight: '500', 
             cursor: 'pointer', 
-            zIndex: 999, // Boshqa elementlar ustida turishi uchun
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            transition: 'all 0.2s'
+            width: 'fit-content'
           }}
-          onMouseOver={(e) => e.currentTarget.style.background = 'rgba(252, 211, 77, 0.2)'}
-          onMouseOut={(e) => e.currentTarget.style.background = 'rgba(252, 211, 77, 0.1)'}
         >
           ⚙️ Admin Panel
         </button>
@@ -149,12 +159,12 @@ export default function App() {
       {historyView ? (
         <div className="dashboard-panel">
           <button className="btn-neon" onClick={() => setHistoryView(null)}>⬅️ Orqaga</button>
-          <h2>Sana: {historyView.date}</h2>
+          <h2 style={{ fontSize: '18px', margin: '15px 0' }}>Sana: {historyView.date}</h2>
           
-          <div style={{ background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '12px', marginBottom: '20px' }}>
-            <div style={{ color: '#aaa' }}>Jami tushum: {historyView.totalRevenue?.toLocaleString()} so'm</div>
-            <div style={{ color: '#ff4d4d' }}>Jami xarajat: {Object.values(historyView.orders || {}).reduce((sum, o) => sum + (o.totalCost || 0), 0).toLocaleString()} so'm</div>
-            <div style={{ color: '#51cf66', fontWeight: 'bold', fontSize: '18px' }}>
+          <div style={{ background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '12px', marginBottom: '20px', fontSize: '14px' }}>
+            <div style={{ color: '#aaa', marginBottom: '4px' }}>Jami tushum: {historyView.totalRevenue?.toLocaleString()} so'm</div>
+            <div style={{ color: '#ff4d4d', marginBottom: '4px' }}>Jami xarajat: {Object.values(historyView.orders || {}).reduce((sum, o) => sum + (o.totalCost || 0), 0).toLocaleString()} so'm</div>
+            <div style={{ color: '#51cf66', fontWeight: 'bold', fontSize: '16px', marginTop: '8px' }}>
               Sof foyda: {(historyView.totalRevenue - Object.values(historyView.orders || {}).reduce((sum, o) => sum + (o.totalCost || 0), 0)).toLocaleString()} so'm
             </div>
           </div>
@@ -163,11 +173,11 @@ export default function App() {
             {historyView.orders && Object.keys(historyView.orders).map(key => {
               const order = historyView.orders[key];
               return (
-                <div key={key} className="inner-order-card" style={{ padding: '15px' }}>
-                  <h4 style={{ color: '#ffb703' }}>{order.title}</h4>
-                  {order.items?.map((item, i) => <div key={i}>{item.name} ({item.qty}x)</div>)}
-                  <div style={{ marginTop: '10px', color: '#51cf66' }}>Foyda: {(order.totalPrice - order.totalCost).toLocaleString()} so'm</div>
-                  <div style={{ fontWeight: 'bold' }}>Jami: {order.totalPrice?.toLocaleString()} so'm</div>
+                <div key={key} className="inner-order-card" style={{ padding: '15px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <h4 style={{ color: '#ffb703', margin: '0 0 10px 0' }}>{order.title}</h4>
+                  {order.items?.map((item, i) => <div key={i} style={{ fontSize: '13px', color: '#ddd' }}>{item.name} ({item.qty}x)</div>)}
+                  <div style={{ marginTop: '10px', color: '#51cf66', fontSize: '13px' }}>Foyda: {(order.totalPrice - order.totalCost).toLocaleString()} so'm</div>
+                  <div style={{ fontWeight: 'bold', fontSize: '14px', marginTop: '4px' }}>Jami: {order.totalPrice?.toLocaleString()} so'm</div>
                 </div>
               );
             })}
@@ -177,9 +187,10 @@ export default function App() {
         <>
           {!activeShift && (
             <div className="dashboard-panel">
+              {/* Nav-row mobilbop qilindi (Klass pastdagi CSS da yozilgan) */}
               <div className="nav-row">
-                <input type="text" className="search-box-neon" placeholder="Oy bo'yicha qidirish..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                <button className="btn-neon" onClick={handleStartDay}>Kunni boshlash</button>
+                <input type="text" className="search-box-neon" placeholder="Oy bo'yicha qidirish..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
+                <button className="btn-neon" onClick={handleStartDay} style={{ width: '100%' }}>Kunni boshlash</button>
               </div>
               <div className="cards-grid">
                 {pastShifts.filter(s => s.date.includes(searchTerm)).map(shift => (
@@ -188,52 +199,61 @@ export default function App() {
               </div>
             </div>
           )}
+          
           {activeShift && (
             <div className="dashboard-panel">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '20px' }}>
-                <h2>Sana: {activeShift.date}</h2>
-                <div style={{ fontSize: '14px', color: '#ffb703', background: 'rgba(255,183,3,0.1)', padding: '6px 16px', borderRadius: '20px', fontWeight: '600' }}>Smena ochiq</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
+                <h2 style={{ margin: 0, fontSize: '18px' }}>Sana: {activeShift.date}</h2>
+                <div style={{ fontSize: '12px', color: '#ffb703', background: 'rgba(255,183,3,0.1)', padding: '4px 12px', borderRadius: '20px', fontWeight: '600' }}>Smena ochiq</div>
               </div>
-              <div className="shift-orders-grid">
+              
+              <div className="shift-orders-grid" style={{ marginTop: '20px' }}>
                 {activeShift.orders && Object.keys(activeShift.orders).map(key => {
                   const order = activeShift.orders[key];
                   return (
-                    <div key={key} className="inner-order-card">
+                    <div key={key} className="inner-order-card" style={{ padding: '15px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                        <h4 style={{ margin: 0, color: '#ffb703', fontSize: '18px' }}>{order.title}</h4>
+                        <h4 style={{ margin: 0, color: '#ffb703', fontSize: '16px' }}>{order.title}</h4>
                         <button onClick={() => handleEditClick(key, order)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#ffb703', cursor: 'pointer', borderRadius: '6px', padding: '4px 8px' }}>✏️</button>
                       </div>
                       {order.items?.map((item, idx) => (
-                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between' }}><span>{item.name} ({item.qty}x)</span><span>{(Number(item.sellPrice || 0) * item.qty).toLocaleString()} so'm</span></div>
+                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '4px' }}>
+                          <span>{item.name} ({item.qty}x)</span>
+                          <span style={{ color: '#aaa' }}>{(Number(item.sellPrice || 0) * item.qty).toLocaleString()} so'm</span>
+                        </div>
                       ))}
-                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: '15px', paddingTop: '10px', textAlign: 'right', color: '#ffb703' }}>{order.totalPrice?.toLocaleString()} so'm</div>
+                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: '12px', paddingTop: '8px', textAlign: 'right', color: '#ffb703', fontWeight: 'bold' }}>{order.totalPrice?.toLocaleString()} so'm</div>
                     </div>
                   );
                 })}
-                <div className="huge-plus-card" onClick={() => { setEditingOrderKey(null); setBasket([]); setIsMenuModalOpen(true); }}>+</div>
+                <div className="huge-plus-card" onClick={() => { setEditingOrderKey(null); setBasket([]); setIsMenuModalOpen(true); }} style={{ minHeight: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', border: '2px dashed rgba(255,255,255,0.15)', borderRadius: '12px', cursor: 'pointer' }}>+</div>
               </div>
-              <button className="btn-neon" style={{ marginTop: '40px', background: '#ffb703', color: '#000' }} onClick={handleCloseDay}>Kunni yakunlash</button>
+              <button className="btn-neon" style={{ marginTop: '30px', background: '#ffb703', color: '#000', width: '100%' }} onClick={handleCloseDay}>Kunni yakunlash</button>
             </div>
           )}
         </>
       )}
 
+      {/* MODAL OYNA (Telefonda to'liq sig'ishi va qulay skroll bo'lishi uchun) */}
       {isMenuModalOpen && (
-        <div className="custom-modal-backdrop">
-          <div className="custom-modal-box">
-             <div style={{ maxHeight: '380px', overflowY: 'auto' }}>
+        <div className="custom-modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '10px' }}>
+          <div className="custom-modal-box" style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '16px', width: '100%', maxWidth: '450px', boxSizing: 'border-box' }}>
+             <div style={{ maxHeight: '60vh', overflowY: 'auto', marginBottom: '15px', paddingRight: '4px' }}>
               {Object.entries(menu).map(([category, products]) => (
-                <div key={category} style={{ marginBottom: '22px' }}>
-                  <h4 style={{ textTransform: 'uppercase', fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>{category}</h4>
+                <div key={category} style={{ marginBottom: '16px' }}>
+                  <h4 style={{ textTransform: 'uppercase', fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: '0 0 8px 0', letterSpacing: '1px' }}>{category}</h4>
                   {products.map(product => {
                     const qty = basket.find(item => item.id === product.id)?.qty || 0;
                     return (
-                      <div key={product.id} className="menu-item-row">
-                        <div><div>{product.name}</div><div style={{ color: '#ffb703' }}>{Number(product.sellPrice || 0).toLocaleString()} so'm</div></div>
-                        <div className="counter-tools">
-                          <button className="btn-circle" onClick={() => handleToggleCount(product, -1)}>-</button>
-                          <span style={{ minWidth: '20px', textAlign: 'center' }}>{qty}</span>
-                          <button className="btn-circle plus-active" onClick={() => handleToggleCount(product, 1)}>+</button>
+                      <div key={product.id} className="menu-item-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                        <div style={{ flex: 1, paddingRight: '10px' }}>
+                          <div style={{ fontSize: '14px', color: '#fff' }}>{product.name}</div>
+                          <div style={{ color: '#ffb703', fontSize: '13px' }}>{Number(product.sellPrice || 0).toLocaleString()} so'm</div>
+                        </div>
+                        <div className="counter-tools" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <button className="btn-circle" onClick={() => handleToggleCount(product, -1)} style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)', background: 'none', color: '#fff', cursor: 'pointer' }}>-</button>
+                          <span style={{ minWidth: '20px', textAlign: 'center', fontSize: '14px' }}>{qty}</span>
+                          <button className="btn-circle plus-active" onClick={() => handleToggleCount(product, 1)} style={{ width: '28px', height: '28px', borderRadius: '50%', border: 'none', background: '#ffb703', color: '#000', cursor: 'pointer', fontWeight: 'bold' }}>+</button>
                         </div>
                       </div>
                     );
@@ -241,7 +261,9 @@ export default function App() {
                 </div>
               ))}
             </div>
-            <button className="btn-neon" onClick={handleSaveOrder}>{editingOrderKey ? 'Yangilash' : "Qo'shish"}</button>
+            <button className="btn-neon" onClick={handleSaveOrder} style={{ width: '100%', padding: '12px', borderRadius: '10px' }}>
+              {editingOrderKey ? 'Yangilash' : "Qo'shish"}
+            </button>
           </div>
         </div>
       )}
