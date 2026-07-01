@@ -144,7 +144,7 @@ export default function AdminPanel() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <label style={{ fontSize: '12px', color: '#aaa' }}>Mahsulot nomi</label>
                 <input 
-                  placeholder="Masalan: Cheesecake" 
+                  placeholder="Masalan: Moxito" 
                   value={editData.name} 
                   onChange={e => setEditData({...editData, name: e.target.value})} 
                   className="modal-input"
