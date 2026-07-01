@@ -110,9 +110,31 @@ export default function AdminPanel() {
       ))}
 
       {/* MODAL OYNA: Telefon ekraniga to'liq moslashadigan qismi */}
-      {isModalOpen && (
-        <div className="custom-modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '12px' }}>
-          <div className="custom-modal-box glass-effect" style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '20px', width: '100%', maxWidth: '420px', boxSizing: 'border-box' }}>
+{isModalOpen && (
+        <div 
+          className="custom-modal-backdrop" 
+          onClick={() => setIsModalOpen(false)} /* 👈 Qora fonga (tashqarisiga) bosganda yopiladi */
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '12px' }}
+        >
+          <div 
+            className="custom-modal-box glass-effect" 
+            onClick={(e) => e.stopPropagation()} /* 👈 Formaning ichiga bosganda yopilib ketmaydi */
+            style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '20px', width: '100%', maxWidth: '420px', boxSizing: 'border-box', position: 'relative' }}
+          >
+            {/* 📱 Telefonda va kompyuterda bosganda yopilishi uchun chiziqcha */}
+            <div 
+              className="modal-swipe-handle"
+              onClick={() => setIsModalOpen(false)} /* 👈 Chiziqchani bossa ham yopiladi */
+              style={{ 
+                width: '50px', 
+                height: '10px', 
+                background: 'rgba(255,255,255,0.2)', 
+                borderRadius: '5px', 
+                margin: '-10px auto 15px auto', 
+                cursor: 'pointer' 
+              }}
+            />
+
             <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, fontSize: '18px', color: '#ffb703' }}>{editData.id ? 'Tahrirlash ✏️' : 'Yangi mahsulot ➕'}</h3>
               <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', color: '#fff', fontSize: '24px', cursor: 'pointer', padding: '0 5px' }}>&times;</button>

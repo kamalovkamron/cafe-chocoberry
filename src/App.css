@@ -430,3 +430,45 @@ body {
     transform: translateY(0);
   }
 }
+
+/* Barcha qurilmalar uchun umumiy reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: #0b0b0c;
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* 📱 IPHONE PRO MAX VA MOBIL QURILMALAR UCHUN STIL (max-width: 480px) */
+@media (max-width: 480px) {
+  .custom-modal-backdrop {
+    align-items: flex-end !important; /* Telefonda modal pastdan chiqadi */
+    padding: 0 !important;
+  }
+
+  .custom-modal-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 24px 24px 0 0 !important; /* Faqat tepasi yumaloq */
+    padding: 16px 16px calc(env(safe-area-inset-bottom) + 16px) 16px !important;
+    transform: translateY(0);
+    will-change: transform;
+  }
+
+  /* Mobil skrollni chiroyli va silliq qilish */
+  .custom-modal-box > div:first-of-type {
+    max-height: 65vh !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Tizim standart skrollbarni yashirish */
+  .custom-modal-box > div:first-of-type::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+  }
+}

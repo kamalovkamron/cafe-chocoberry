@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { db } from './firebase';
 import { ref, onValue, set, push, remove, serverTimestamp } from 'firebase/database';
 
 // ----------------------------------------------------
-// 1. ORDER CARD KOMPONENTI (Telefonga moslashtirilgan)
+// 1. ORDER CARD KOMPONENTI
 // ----------------------------------------------------
 function OrderCard({ data, onOpenHistory }) {
   const totalAmount = data.totalRevenue || 0;
@@ -15,7 +15,7 @@ function OrderCard({ data, onOpenHistory }) {
       background: 'rgba(255,255,255,0.03)', 
       border: '1px solid rgba(255,255,255,0.08)', 
       borderRadius: '18px', 
-      padding: '16px', // Mobil uchun padding biroz kamaytirildi
+      padding: '16px', 
       display: 'flex', 
       flexDirection: 'column', 
       justifyContent: 'space-between', 
@@ -26,7 +26,6 @@ function OrderCard({ data, onOpenHistory }) {
         <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '500' }}>{data.orderCount || 0}ta zakaz</h3>
       </div>
       
-      {/* Mobil ekranda elementlar bir-birining ostiga tushishi uchun flex-wrap qo'shildi */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', flexWrap: 'wrap', gap: '8px' }}>
         <div style={{ color: '#51cf66', fontSize: '13px', fontWeight: '600' }}>Foyda: {netProfit.toLocaleString()}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -52,6 +51,10 @@ export default function App() {
   const [basket, setBasket] = useState([]); 
   const [historyView, setHistoryView] = useState(null); 
   const [editingOrderKey, setEditingOrderKey] = useState(null);
+
+  const touchStartRef = useRef(0);
+  const touchCurrentRef = useRef(0);
+  const modalRef = useRef(null);
 
   useEffect(() => {
     onValue(ref(db, 'menu'), (snapshot) => {
@@ -119,43 +122,39 @@ export default function App() {
     set(ref(db, `past_shifts/${archiveId}`), { ...activeShift, totalRevenue: dayTotalRevenue, orders: activeShift.orders || {} }).then(() => { remove(ref(db, 'active_shift')); setActiveShift(null); });
   };
 
+  const closeModal = () => {
+    setIsMenuModalOpen(false);
+    setEditingOrderKey(null);
+    setBasket([]);
+  };
+
+  const handleTouchStart = (e) => { touchStartRef.current = e.touches[0].clientY; };
+  const handleTouchMove = (e) => {
+    const currentY = e.touches[0].clientY;
+    touchCurrentRef.current = currentY;
+    const deltaY = currentY - touchStartRef.current;
+    if (deltaY > 0 && modalRef.current) {
+      modalRef.current.style.transform = `translateY(${deltaY}px)`;
+      modalRef.current.style.transition = 'none';
+    }
+  };
+  const handleTouchEnd = () => {
+    const deltaY = touchCurrentRef.current - touchStartRef.current;
+    if (modalRef.current) {
+      if (deltaY > 100 && touchCurrentRef.current !== 0) { closeModal(); } 
+      else { modalRef.current.style.transform = 'translateY(0)'; modalRef.current.style.transition = 'transform 0.3s ease-out'; }
+    }
+    touchStartRef.current = 0; touchCurrentRef.current = 0;
+  };
+
   return (
     <div className="app-wrapper" style={{ padding: '10px', maxWidth: '1200px', margin: '0 auto' }}>
       
-      {/* HEADER PANEL (Mobil qurilmalarda chiroyli chiqishi uchun o'zgartirildi) */}
-      <header className="app-header" style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center', 
-        gap: '15px', 
-        marginBottom: '20px', 
-        paddingTop: '10px' 
-      }}>
-        <h1 style={{ color: '#fcd34d', fontSize: '22px', fontWeight: 'bold', margin: 0, textAlign: 'center' }}>
-          🍓 Choco Berry Dashboard
-        </h1>
-        <button 
-          onClick={() => { window.location.href = '/adminpanel'; }}
-          style={{ 
-            background: 'rgba(252, 211, 77, 0.1)', 
-            border: '1px solid #fcd34d', 
-            color: '#fcd34d', 
-            padding: '8px 16px', 
-            borderRadius: '10px', 
-            fontSize: '14px', 
-            fontWeight: '500', 
-            cursor: 'pointer', 
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            width: 'fit-content'
-          }}
-        >
-          ⚙️ Admin Panel
-        </button>
+      <header className="app-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', marginBottom: '20px', paddingTop: '10px' }}>
+        <h1 style={{ color: '#fcd34d', fontSize: '22px', fontWeight: 'bold', margin: 0, textAlign: 'center' }}>🍓 Choco Berry Dashboard</h1>
+        <button onClick={() => { window.location.href = '/adminpanel'; }} style={{ background: 'rgba(252, 211, 77, 0.1)', border: '1px solid #fcd34d', color: '#fcd34d', padding: '8px 16px', borderRadius: '10px', fontSize: '14px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', width: 'fit-content' }}>⚙️ Admin Panel</button>
       </header>
 
-      {/* ARXIVNI KO'RSATISH (HISTORY VIEW) */}
       {historyView ? (
         <div className="dashboard-panel">
           <button className="btn-neon" onClick={() => setHistoryView(null)}>⬅️ Orqaga</button>
@@ -164,9 +163,7 @@ export default function App() {
           <div style={{ background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '12px', marginBottom: '20px', fontSize: '14px' }}>
             <div style={{ color: '#aaa', marginBottom: '4px' }}>Jami tushum: {historyView.totalRevenue?.toLocaleString()} so'm</div>
             <div style={{ color: '#ff4d4d', marginBottom: '4px' }}>Jami xarajat: {Object.values(historyView.orders || {}).reduce((sum, o) => sum + (o.totalCost || 0), 0).toLocaleString()} so'm</div>
-            <div style={{ color: '#51cf66', fontWeight: 'bold', fontSize: '16px', marginTop: '8px' }}>
-              Sof foyda: {(historyView.totalRevenue - Object.values(historyView.orders || {}).reduce((sum, o) => sum + (o.totalCost || 0), 0)).toLocaleString()} so'm
-            </div>
+            <div style={{ color: '#51cf66', fontWeight: 'bold', fontSize: '16px', marginTop: '8px' }}>Sof foyda: {(historyView.totalRevenue - Object.values(historyView.orders || {}).reduce((sum, o) => sum + (o.totalCost || 0), 0)).toLocaleString()} so'm</div>
           </div>
 
           <div className="shift-orders-grid">
@@ -187,7 +184,6 @@ export default function App() {
         <>
           {!activeShift && (
             <div className="dashboard-panel">
-              {/* Nav-row mobilbop qilindi (Klass pastdagi CSS da yozilgan) */}
               <div className="nav-row">
                 <input type="text" className="search-box-neon" placeholder="Oy bo'yicha qidirish..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
                 <button className="btn-neon" onClick={handleStartDay} style={{ width: '100%' }}>Kunni boshlash</button>
@@ -234,11 +230,28 @@ export default function App() {
         </>
       )}
 
-      {/* MODAL OYNA (Telefonda to'liq sig'ishi va qulay skroll bo'lishi uchun) */}
       {isMenuModalOpen && (
-        <div className="custom-modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '10px' }}>
-          <div className="custom-modal-box" style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '16px', width: '100%', maxWidth: '450px', boxSizing: 'border-box' }}>
-             <div style={{ maxHeight: '60vh', overflowY: 'auto', marginBottom: '15px', paddingRight: '4px' }}>
+        <div 
+          className="custom-modal-backdrop" 
+          onClick={closeModal} 
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '10px' }}
+        >
+          <div 
+            ref={modalRef}
+            className="custom-modal-box" 
+            onClick={(e) => e.stopPropagation()} 
+            style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '16px', width: '100%', maxWidth: '450px', boxSizing: 'border-box', position: 'relative' }}
+          >
+            <div 
+              className="modal-swipe-handle"
+              onClick={closeModal}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              style={{ width: '50px', height: '10px', background: 'rgba(255,255,255,0.2)', borderRadius: '5px', margin: '-6px auto 15px auto', cursor: 'pointer' }}
+            />
+
+            <div style={{ maxHeight: '60vh', overflowY: 'auto', marginBottom: '15px', paddingRight: '4px' }}>
               {Object.entries(menu).map(([category, products]) => (
                 <div key={category} style={{ marginBottom: '16px' }}>
                   <h4 style={{ textTransform: 'uppercase', fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: '0 0 8px 0', letterSpacing: '1px' }}>{category}</h4>
