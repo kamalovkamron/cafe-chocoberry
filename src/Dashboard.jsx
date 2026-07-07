@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from './firebase';
 import { ref, onValue, set, push, remove, serverTimestamp } from 'firebase/database';
-import AdminPanel from './Adminpanel';
+import AdminPanel from './AdminPanel';
 import Prixod from './Prixod'; // Fayl papkangizda bor ekan
 // ----------------------------------------------------
 // 1. ORDER CARD KOMPONENTI
