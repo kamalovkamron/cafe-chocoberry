@@ -60,15 +60,19 @@ export default function App() {
   const touchStartRef = useRef(0);
   const touchCurrentRef = useRef(0);
   const modalRef = useRef(null);
-
   useEffect(() => {
     onValue(ref(db, 'menu'), (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const format = (cat) => data[cat] ? Object.keys(data[cat]).map(k => ({ id: k, ...data[cat][k] })) : [];
-        setMenu({ shirinliklar: format('shirinliklar'), ichimliklar: format('ichimliklar') });
-      }
-    });
+    const data = snapshot.val();
+    if (data) {
+      const format = (cat) => data[cat] ? Object.keys(data[cat]).map(k => ({ id: k, ...data[cat][k] })) : [];
+      setMenu({ 
+        shirinliklar: format('shirinliklar'), 
+        ichimliklar: format('ichimliklar'),
+        qutilar: format('qutilar') // 👈 MANA SHU QATOR QO'SHILDI
+      });
+    }
+  });
+
     onValue(ref(db, 'active_shift'), (snapshot) => setActiveShift(snapshot.val()));
     onValue(ref(db, 'past_shifts'), (snapshot) => {
       const data = snapshot.val();
@@ -124,13 +128,19 @@ export default function App() {
       return;
     }
 
-    basket.forEach((item) => {
-        const category = menu.shirinliklar.find(p => p.id === item.id) ? 'shirinliklar' : 'ichimliklar';
-        const currentMenuProd = menu[category].find(p => p.id === item.id);
-        const newChiqim = Number(currentMenuProd.chiqim || 0) + item.qty;
-        set(ref(db, `menu/${category}/${item.id}/chiqim`), newChiqim);
-    });
+basket.forEach((item) => {
+    let category = 'ichimliklar';
+    if (menu.shirinliklar.find(p => p.id === item.id)) category = 'shirinliklar';
+    else if (menu.qutilar.find(p => p.id === item.id)) category = 'qutilar';
 
+    // ✅ TO'G'RI: product emas, item.id bo'lishi kerak!
+    const currentMenuProd = menu[category].find(p => p.id === item.id); 
+    
+    if (currentMenuProd) {
+      const newChiqim = Number(currentMenuProd.chiqim || 0) + item.qty;
+      set(ref(db, `menu/${category}/${item.id}/chiqim`), newChiqim);
+    }
+});
     const orderTotal = basket.reduce((sum, item) => sum + (Number(item.sellPrice || 0) * item.qty), 0);
     const orderCost = basket.reduce((sum, item) => sum + (Number(item.costPrice || 0) * item.qty), 0);
     const orderData = { 
@@ -168,9 +178,9 @@ export default function App() {
         });
       }
 
-      ['shirinliklar', 'ichimliklar'].forEach(cat => {
-        if (menuData[cat]) {
-          Object.keys(menuData[cat]).forEach(id => {
+['shirinliklar', 'ichimliklar', 'qutilar'].forEach(cat => {
+  if (menuData[cat]) {
+    Object.keys(menuData[cat]).forEach(id => {
             const item = menuData[cat][id];
             const oldStock = Number(item.stock || 0);
             const kirim = Number(item.kirim || 0);

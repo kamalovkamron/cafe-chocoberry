@@ -5,13 +5,18 @@ import { Link } from 'react-router-dom';
 import './App.css';
 
 export default function AdminPanel() {
-  const [menu, setMenu] = useState({ shirinliklar: {}, ichimliklar: {} });
+  const [menu, setMenu] = useState({ shirinliklar: {}, ichimliklar: {}, qutilar: {} }); // 👈 qutilar qo'shildi
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editData, setEditData] = useState({ id: null, cat: '', name: '', costPrice: '', sellPrice: '' });
 
   useEffect(() => {
     onValue(ref(db, 'menu'), (snapshot) => {
-      setMenu(snapshot.val() || { shirinliklar: {}, ichimliklar: {} });
+      const data = snapshot.val() || {};
+      setMenu({
+        shirinliklar: data.shirinliklar || {},
+        ichimliklar: data.ichimliklar || {},
+        qutilar: data.qutilar || {} // 👈 qutilar yuklanadi
+      });
     });
   }, []);
 
@@ -47,13 +52,14 @@ export default function AdminPanel() {
         alignItems: 'center', 
         marginBottom: '30px',
         gap: '15px',
-        flexWrap: 'wrap' /* Mobil qurilmada tugma pastga tushadi */
+        flexWrap: 'wrap'
       }}>
         <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 'bold' }}>Admin Panel</h1>
-        <Link to="/" className="btn-neon" style={{ textDecoration: 'none', textAlign: 'center' }}>⬅ Dashboard</Link>
+        // To'g'ri varianti:
+<Link to="/" className="btn-neon" style={{ textDecoration: 'none', textAlign: 'center' }}>⬅ Dashboard</Link>
       </div>
 
-      {['shirinliklar', 'ichimliklar'].map(cat => (
+      {['shirinliklar', 'ichimliklar', 'qutilar'].map(cat => ( // 👈 'qutilar' qo'shildi
         <div key={cat} className="category-section" style={{ marginBottom: '35px' }}>
           <h2 style={{ textTransform: 'capitalize', color: '#ffb703', fontSize: '20px', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '8px' }}>
             {cat}
@@ -72,7 +78,6 @@ export default function AdminPanel() {
                 padding: '12px 16px',
                 gap: '15px'
               }}>
-                {/* Matnli qism: ichki stillar klasslar orqali mobilbop qilinadi */}
                 <div className="menu-item-info" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <span className="item-name" style={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>{item.name}</span>
                   <div className="item-prices" style={{ fontSize: '13px', color: '#aaa' }}>
@@ -109,30 +114,22 @@ export default function AdminPanel() {
         </div>
       ))}
 
-      {/* MODAL OYNA: Telefon ekraniga to'liq moslashadigan qismi */}
-{isModalOpen && (
+      {/* MODAL OYNA */}
+      {isModalOpen && (
         <div 
           className="custom-modal-backdrop" 
-          onClick={() => setIsModalOpen(false)} /* 👈 Qora fonga (tashqarisiga) bosganda yopiladi */
+          onClick={() => setIsModalOpen(false)} 
           style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '12px' }}
         >
           <div 
             className="custom-modal-box glass-effect" 
-            onClick={(e) => e.stopPropagation()} /* 👈 Formaning ichiga bosganda yopilib ketmaydi */
+            onClick={(e) => e.stopPropagation()} 
             style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '20px', width: '100%', maxWidth: '420px', boxSizing: 'border-box', position: 'relative' }}
           >
-            {/* 📱 Telefonda va kompyuterda bosganda yopilishi uchun chiziqcha */}
             <div 
               className="modal-swipe-handle"
-              onClick={() => setIsModalOpen(false)} /* 👈 Chiziqchani bossa ham yopiladi */
-              style={{ 
-                width: '50px', 
-                height: '10px', 
-                background: 'rgba(255,255,255,0.2)', 
-                borderRadius: '5px', 
-                margin: '-10px auto 15px auto', 
-                cursor: 'pointer' 
-              }}
+              onClick={() => setIsModalOpen(false)} 
+              style={{ width: '50px', height: '10px', background: 'rgba(255,255,255,0.2)', borderRadius: '5px', margin: '-10px auto 15px auto', cursor: 'pointer' }}
             />
 
             <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
