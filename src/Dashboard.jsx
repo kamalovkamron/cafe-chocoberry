@@ -7,7 +7,7 @@ import Prixod from './Prixod'; // Fayl papkangizda bor ekan
 // 1. ORDER CARD KOMPONENTI
 // ----------------------------------------------------
 function OrderCard({ data, onOpenHistory }) {
-  const gok = data.totalRevenue || 0;
+
   const totalAmount = data.totalRevenue || 0;
   const totalCost = Object.values(data.orders || {}).reduce((sum, o) => sum + (o.totalCost || 0), 0);
   const netProfit = totalAmount - totalCost;
@@ -45,6 +45,7 @@ const [paymentMethod, setPaymentMethod] = useState('Naqd'); // Asosiy holat: Naq
 // 2. ASOSIY APP COMPONENT
 // ----------------------------------------------------
 export default function App() {
+  const [stockErrors, setStockErrors] = useState({}); // Mahsulotlar limiti xatosi uchun
   const [searchTerm, setSearchTerm] = useState('');
   const [pastShifts, setPastShifts] = useState([]);
   const [activeShift, setActiveShift] = useState(null);
@@ -57,8 +58,6 @@ export default function App() {
   const touchStartRef = useRef(0);
   const touchCurrentRef = useRef(0);
   const modalRef = useRef(null);
-// Mahsulot qoldig'ini to'g'ri hisoblash uchun ushbu formuladan foydalaning:
-const qoldiq = Number(product.stock || 0) + Number(product.kirim || 0) - Number(product.chiqim || 0);
   useEffect(() => {
     onValue(ref(db, 'menu'), (snapshot) => {
       const data = snapshot.val();
@@ -85,28 +84,34 @@ const qoldiq = Number(product.stock || 0) + Number(product.kirim || 0) - Number(
   };
 
 const handleToggleCount = (product, delta) => {
-  const totalAvailable = Number(product.stock || 0) + Number(product.kirim || 0);
-  
-  setBasket(prev => {
-    const found = prev.find(item => item.id === product.id);
-    const currentQty = found ? found.qty : 0;
-    const newQty = currentQty + delta;
+  const realStock = Number(product.stock || 0) + Number(product.kirim || 0) - Number(product.chiqim || 0);
+  
+  setBasket(prev => {
+    const found = prev.find(item => item.id === product.id);
+    const currentQty = found ? found.qty : 0;
+    const newQty = currentQty + delta;
 
-    // 1. Agar kamaytirmoqchi bo'lsak va 0 dan kichik bo'lsa
-    if (newQty <= 0) return prev.filter(item => item.id !== product.id);
-    
-    // 2. Agar ko'paytirmoqchi bo'lsak va qoldiqdan oshib ketsa, qo'shmaymiz
-    if (newQty > totalAvailable) {
-      alert("Omborda yetarli mahsulot yo'q!");
-      return prev;
-    }
+    if (newQty <= 0) return prev.filter(item => item.id !== product.id);
+    
+    // Agar limitdan oshsa, pastda qizil yozuv chiqadi
+    if (delta > 0 && newQty > realStock) {
+      setStockErrors(prevErr => ({ ...prevErr, [product.id]: "Omborda yetarli mahsulot yo'q!" }));
+      
+      // 2.5 soniyadan keyin qizil yozuv o'zi o'chib ketadi
+      setTimeout(() => {
+        setStockErrors(prevErr => ({ ...prevErr, [product.id]: null }));
+      }, 2500);
 
-    return found 
-      ? prev.map(item => item.id === product.id ? { ...item, qty: newQty } : item)
-      : [...prev, { ...product, qty: 1 }];
-  });
+      return prev;
+    }
+
+    setStockErrors(prevErr => ({ ...prevErr, [product.id]: null }));
+
+    return found 
+      ? prev.map(item => item.id === product.id ? { ...item, qty: newQty } : item)
+      : [...prev, { ...product, qty: 1 }];
+  });
 };
-
 const handleSaveOrder = () => {
     if (basket.length === 0) {
       if (editingOrderKey) {
@@ -439,90 +444,116 @@ const handleCloseDay = () => {
 </div>
 </div>
       {/* 🍰 Mahsulotlar Ro'yxati */}
-      <div style={{ maxHeight: '55vh', overflowY: 'auto', marginBottom: '16px', paddingRight: '2px' }}>
-        {Object.entries(menu).map(([category, products]) => {
-          
-          {/* ✨ Katta va kichik harflarni bir xil qiluvchi asosiy filtr qismi */}
-          const filteredProducts = products.filter(p => 
-            p.name && p.name.toLowerCase().includes(searchTerm.toLowerCase())
-          );
+{/* 🍰 Mahsulotlar Ro'yxati */}
+<div style={{ maxHeight: '55vh', overflowY: 'auto', marginBottom: '16px', paddingRight: '2px' }}>
+  {Object.entries(menu).map(([category, products]) => {
+    
+    const filteredProducts = products.filter(p => 
+      p.name && p.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-          if (filteredProducts.length === 0) return null;
+    if (filteredProducts.length === 0) return null;
 
-          return (
-            <div key={category} style={{ marginBottom: '16px' }}>
-              <h4 style={{ textTransform: 'uppercase', fontSize: '11px', color: '#ffb703', margin: '0 0 10px 4px', letterSpacing: '1.5px', fontWeight: '600', opacity: 0.85 }}>
-                {category}
-              </h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {filteredProducts.map(product => {
-                  const qty = basket.find(item => item.id === product.id)?.qty || 0;
-                  return (
-                    <div 
-                      key={product.id} 
-                      className="menu-item-row" 
-                      style={{ 
-                        display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
-                        padding: '12px', background: 'rgba(255,255,255,0.02)', 
-                        border: '1px solid rgba(255,255,255,0.04)', borderRadius: '12px'
-                      }}
-                    >
-                      <div style={{ flex: 1, paddingRight: '12px' }}>
-                        <div style={{ fontSize: '14px', color: '#f8f9fa', fontWeight: '500', marginBottom: '3px', textTransform: 'capitalize' }}>
-                          {product.name}
-                        </div>
-                        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', fontWeight: '500' }}>
-                          {Number(product.sellPrice || 0).toLocaleString()} so'm
-                        </div>
-                      </div>
+    return (
+      <div key={category} style={{ marginBottom: '16px' }}>
+        <h4 style={{ textTransform: 'uppercase', fontSize: '11px', color: '#ffb703', margin: '0 0 10px 4px', letterSpacing: '1.5px', fontWeight: '600', opacity: 0.85 }}>
+          {category}
+        </h4>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          
+          {/* 👇 MANA SHU YERDAN BOSHLAB ALMASHTIRASIZ 👇 */}
+          {filteredProducts.map(product => {
+            const qty = basket.find(item => item.id === product.id)?.qty || 0;
+            return (
+              <div 
+                key={product.id} 
+                className="menu-item-row" 
+                style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column',
+                  gap: '6px',
+                  padding: '12px', 
+                  background: 'rgba(255,255,255,0.02)', 
+                  border: '1px solid rgba(255,255,255,0.04)', 
+                  borderRadius: '12px'
+                }}
+              >
+                {/* Yuqori asosiy qator (Nomi, Narxi, Qoldig'i va Tugmalar) */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                  <div style={{ flex: 1, paddingRight: '12px' }}>
+                    <div style={{ fontSize: '14px', color: '#f8f9fa', fontWeight: '500', marginBottom: '3px', textTransform: 'capitalize' }}>
+                      {product.name}
+                    </div>
+                    <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', fontWeight: '500' }}>
+                      {Number(product.sellPrice || 0).toLocaleString()} so'm
+                    </div>
+                  </div>
 
-                      {/* Tugmalar paneli */}
-                      {/* ... mahsulot nomi va narxidan keyin ... */}
-<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {/* Ostatka va Tugmalar o'ng tarafda */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {/* Ombordagi haqiqiy qoldiq */}
+                    <div style={{ fontSize: '14px', color: '#ffb703' }}>  
+                      {(Number(product.stock || 0) + Number(product.kirim || 0) - Number(product.chiqim || 0))} dona 
+                    </div>
 
-  {/* Qoldiqni ko'rsatish (Ostatka + Kirim) */}
-  <div style={{ fontSize: '15px', color: '#ffb703', marginRight: '10px' }}>  
-    {(Number(product.stock || 0) + Number(product.kirim || 0) - Number(product.chiqim || 0))} dona 
-  </div>
+                    {/* +/- Tugmalari */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(0,0,0,0.2)', padding: '4px 6px', borderRadius: '25px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                      <button 
+                        className="btn-circle" 
+                        onClick={() => handleToggleCount(product, -1)} 
+                        style={{ 
+                          width: '28px', height: '28px', borderRadius: '50%', border: 'none', 
+                          background: qty > 0 ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)', 
+                          color: qty > 0 ? '#fff' : 'rgba(255,255,255,0.2)', cursor: qty > 0 ? 'pointer' : 'default',
+                          fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}
+                        disabled={qty === 0}
+                      >
+                        -
+                      </button>
+                      <span style={{ minWidth: '18px', textAlign: 'center', fontSize: '14px', fontWeight: '600', color: qty > 0 ? '#ffb703' : '#666' }}>
+                        {qty}
+                      </span>
+                      <button 
+                        className="btn-circle plus-active" 
+                        onClick={() => handleToggleCount(product, 1)} 
+                        style={{ 
+                          width: '28px', height: '28px', borderRadius: '50%', border: 'none', 
+                          background: '#ffb703', color: '#000', cursor: 'pointer', 
+                          fontSize: '16px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
+                {/* PASIDAN CHIQADIGAN QIZIL OGOHLANTIRISH MATNI */}
+                {stockErrors[product.id] && (
+                  <div style={{ 
+                    color: '#ff4d4d', 
+                    fontSize: '12px', 
+                    fontWeight: '600', 
+                    padding: '4px 8px',
+                    background: 'rgba(255, 77, 77, 0.08)',
+                    borderRadius: '6px',
+                    width: 'fit-content',
+                    marginTop: '2px'
+                  }}>
+                    ⚠️ {stockErrors[product.id]}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {/* 👆 MANA SHU YERGACHA ALMASTIRASIZ 👆 */}
+
+        </div>
+      </div>
+    );
+  })}
 </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(0,0,0,0.2)', padding: '4px 6px', borderRadius: '25px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                        <button 
-                          className="btn-circle" 
-                          onClick={() => handleToggleCount(product, -1)} 
-                          style={{ 
-                            width: '28px', height: '28px', borderRadius: '50%', border: 'none', 
-                            background: qty > 0 ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)', 
-                            color: qty > 0 ? '#fff' : 'rgba(255,255,255,0.2)', cursor: qty > 0 ? 'pointer' : 'default',
-                            fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                          }}
-                          disabled={qty === 0}
-                        >
-                          -
-                        </button>
-                        <span style={{ minWidth: '18px', textAlign: 'center', fontSize: '14px', fontWeight: '600', color: qty > 0 ? '#ffb703' : '#666' }}>
-                          {qty}
-                        </span>
-                        <button 
-                          className="btn-circle plus-active" 
-                          onClick={() => handleToggleCount(product, 1)} 
-                          style={{ 
-                            width: '28px', height: '28px', borderRadius: '50%', border: 'none', 
-                            background: '#ffb703', color: '#000', cursor: 'pointer', 
-                            fontSize: '16px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                          }}
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
 
       {/* Saqlash tugmasi */}
       <button 
