@@ -7,6 +7,7 @@ import Prixod from './Prixod'; // Fayl papkangizda bor ekan
 // 1. ORDER CARD KOMPONENTI
 // ----------------------------------------------------
 function OrderCard({ data, onOpenHistory }) {
+  const gok = data.totalRevenue || 0;
   const totalAmount = data.totalRevenue || 0;
   const totalCost = Object.values(data.orders || {}).reduce((sum, o) => sum + (o.totalCost || 0), 0);
   const netProfit = totalAmount - totalCost;
