@@ -91,126 +91,185 @@ export default function App() {
   };
 
   // 👈 KO'PAYTIRISH VA TEKSHIRUV FUNKSIYASI REFAKTORING QILINDI
-  const handleToggleCount = (product, delta) => {
-    const realStock = Number(product.stock || 0) + Number(product.kirim || 0) - Number(product.chiqim || 0);
-    
-    setBasket(prev => {
-      const found = prev.find(item => item.id === product.id);
-      const currentQty = found ? found.qty : 0;
-      const newQty = currentQty + delta;
+const handleToggleCount = (product, delta) => {
+  // 1. Kategoriyani aniqlash (oldin yozganingizdek)
+  let category = 'ichimliklar';
+  if (menu.shirinliklar.find(p => p.id === product.id)) category = 'shirinliklar';
+  else if (menu.qutilar.find(p => p.id === product.id)) category = 'qutilar';
 
-      if (newQty <= 0) return prev.filter(item => item.id !== product.id);
-      
-      if (delta > 0 && newQty > realStock) {
-        setStockErrors(prevErr => ({ ...prevErr, [product.id]: "Omborda yetarli mahsulot yo'q!" }));
-        setTimeout(() => {
-          setStockErrors(prevErr => ({ ...prevErr, [product.id]: null }));
-        }, 2500);
-        return prev;
+  setBasket(prev => {
+    const found = prev.find(item => item.id === product.id);
+    const currentQty = found ? found.qty : 0;
+    const newQty = currentQty + delta;
+
+    // Agar buyurtmadan chiqib ketayotgan bo'lsa
+    if (newQty <= 0) {
+      // Agar bu EDIT rejimi bo'lsa, bazadan qaytarib beramiz
+      if (editingOrderKey && found) {
+        const productRef = ref(db, `menu/${category}/${product.id}/chiqim`);
+        const currentMenuProd = menu[category].find(p => p.id === product.id);
+        const newChiqim = Math.max(0, Number(currentMenuProd.chiqim || 0) - found.qty);
+        set(productRef, newChiqim);
       }
-
-      setStockErrors(prevErr => ({ ...prevErr, [product.id]: null }));
-
-      return found 
-        ? prev.map(item => item.id === product.id ? { ...item, qty: newQty } : item)
-        : [...prev, { ...product, qty: 1 }];
-    });
-  };
-
-  const handleSaveOrder = () => {
-    if (basket.length === 0) {
-      if (editingOrderKey) {
-        remove(ref(db, `active_shift/orders/${editingOrderKey}`));
-        const currentOrders = activeShift.orders ? Object.keys(activeShift.orders).length - 1 : 0;
-        set(ref(db, 'active_shift/orderCount'), currentOrders < 0 ? 0 : currentOrders);
-      }
-      setBasket([]); setIsMenuModalOpen(false); setEditingOrderKey(null);
-      return;
+      return prev.filter(item => item.id !== product.id);
     }
 
-basket.forEach((item) => {
+    // Agar limitdan oshib ketsa
+    const realStock = Number(product.stock || 0) + Number(product.kirim || 0) - Number(product.chiqim || 0);
+    if (delta > 0 && newQty > (found ? (realStock + found.qty) : realStock)) {
+      setStockErrors(prevErr => ({ ...prevErr, [product.id]: "Omborda yetarli mahsulot yo'q!" }));
+      return prev;
+    }
+
+    // 2. BAZANI YANGILASH: + bosilsa chiqim oshadi, - bosilsa chiqim kamayadi
+    if (editingOrderKey) {
+      const productRef = ref(db, `menu/${category}/${product.id}/chiqim`);
+      const currentMenuProd = menu[category].find(p => p.id === product.id);
+      const newChiqim = Number(currentMenuProd.chiqim || 0) + delta;
+      set(productRef, Math.max(0, newChiqim));
+    }
+
+    return found 
+      ? prev.map(item => item.id === product.id ? { ...item, qty: newQty } : item)
+      : [...prev, { ...product, qty: 1 }];
+  });
+};
+const handleDeleteOrder = (orderKey, orderData) => {
+  if (!window.confirm("Bu buyurtmani o'chirmoqchimisiz? Mahsulotlar omborga qaytariladi.")) return;
+
+  // 1. Har bir mahsulot uchun chiqimni kamaytirish
+  orderData.items.forEach((item) => {
     let category = 'ichimliklar';
     if (menu.shirinliklar.find(p => p.id === item.id)) category = 'shirinliklar';
     else if (menu.qutilar.find(p => p.id === item.id)) category = 'qutilar';
 
-    // ✅ TO'G'RI: product emas, item.id bo'lishi kerak!
-    const currentMenuProd = menu[category].find(p => p.id === item.id); 
-    
+    const currentMenuProd = menu[category].find(p => p.id === item.id);
     if (currentMenuProd) {
-      const newChiqim = Number(currentMenuProd.chiqim || 0) + item.qty;
+      // Mavjud chiqimdan zakazdagi miqdorni ayiramiz
+      const newChiqim = Math.max(0, Number(currentMenuProd.chiqim || 0) - item.qty);
       set(ref(db, `menu/${category}/${item.id}/chiqim`), newChiqim);
     }
-});
-    const orderTotal = basket.reduce((sum, item) => sum + (Number(item.sellPrice || 0) * item.qty), 0);
-    const orderCost = basket.reduce((sum, item) => sum + (Number(item.costPrice || 0) * item.qty), 0);
-    const orderData = { 
-        title: editingOrderKey ? activeShift.orders[editingOrderKey].title : `${(activeShift.orders ? Object.keys(activeShift.orders).length : 0) + 1}-zakaz`, 
-        items: basket, 
-        totalPrice: orderTotal, 
-        totalCost: orderCost,
-        paymentMethod: paymentMethod 
-    };
+  });
 
-    if (editingOrderKey) { set(ref(db, `active_shift/orders/${editingOrderKey}`), orderData); }
-    else { push(ref(db, 'active_shift/orders'), orderData); set(ref(db, 'active_shift/orderCount'), (activeShift.orders ? Object.keys(activeShift.orders).length : 0) + 1); }
-    
-    setBasket([]); setIsMenuModalOpen(false); setEditingOrderKey(null); setPaymentMethod('Naqd');
+  // 2. Buyurtmani bazadan o'chirish
+  remove(ref(db, `active_shift/orders/${orderKey}`));
+
+  // 3. Buyurtmalar sonini yangilash
+  const currentOrderCount = activeShift.orders ? Object.keys(activeShift.orders).length - 1 : 0;
+  set(ref(db, 'active_shift/orderCount'), Math.max(0, currentOrderCount));
+};
+const handleSaveOrder = () => {
+  // 1. Agar savat bo'sh bo'lsa
+  if (basket.length === 0) {
+    if (editingOrderKey) {
+      // Agar tahrirlash rejimida bo'lsa va savatni bo'shatsangiz, buyurtmani o'chiramiz
+      // Eslatma: handleDeleteOrder funksiyasini chaqirish ham mumkin
+      remove(ref(db, `active_shift/orders/${editingOrderKey}`));
+      const currentOrders = activeShift.orders ? Object.keys(activeShift.orders).length - 1 : 0;
+      set(ref(db, 'active_shift/orderCount'), Math.max(0, currentOrders));
+    }
+    setBasket([]);
+    setIsMenuModalOpen(false);
+    setEditingOrderKey(null);
+    return;
+  }
+
+  // 2. Narx va tannarx hisob-kitobi
+  const orderTotal = basket.reduce((sum, item) => sum + (Number(item.sellPrice || 0) * item.qty), 0);
+  const orderCost = basket.reduce((sum, item) => sum + (Number(item.costPrice || 0) * item.qty), 0);
+
+  // 3. Buyurtma ma'lumotlarini tayyorlash
+  const orderData = {
+    title: editingOrderKey 
+      ? activeShift.orders[editingOrderKey].title 
+      : `${(activeShift.orders ? Object.keys(activeShift.orders).length : 0) + 1}-zakaz`,
+    items: basket,
+    totalPrice: orderTotal,
+    totalCost: orderCost,
+    paymentMethod: paymentMethod,
+    timestamp: serverTimestamp()
   };
 
-  const handleEditClick = (orderKey, orderData) => { setEditingOrderKey(orderKey); setBasket(orderData.items || []); setIsMenuModalOpen(true); };
+  // 4. Bazaga saqlash
+  if (editingOrderKey) {
+    // Agar tahrirlanayotgan bo'lsa, mavjudini yangilash
+    set(ref(db, `active_shift/orders/${editingOrderKey}`), orderData);
+  } else {
+    // Agar yangi buyurtma bo'lsa, bazaga qo'shish
+    push(ref(db, 'active_shift/orders'), orderData);
+    set(ref(db, 'active_shift/orderCount'), (activeShift.orders ? Object.keys(activeShift.orders).length : 0) + 1);
+  }
 
-  const handleCloseDay = () => {
-    if (!activeShift) return;
-    if (!window.confirm("Kunni yakunlamoqchimisiz? Bu qoldiqlarni ertangi kunga o'tkazadi.")) return;
+  // 5. Holatni tozalash
+  setBasket([]);
+  setIsMenuModalOpen(false);
+  setEditingOrderKey(null);
+  setPaymentMethod('Naqd');
+};
 
-    const updatePromises = [];
-    
-    onValue(ref(db, 'menu'), (snapshot) => {
-      const menuData = snapshot.val();
-      if (!menuData) return;
+const handleEditClick = (orderKey, orderData) => { 
+    setEditingOrderKey(orderKey); 
+    setBasket(orderData.items || []); 
+    setIsMenuModalOpen(true); 
+};
+const handleCloseDay = () => {
+  if (!activeShift) return;
+  if (!window.confirm("Kunni yakunlamoqchimisiz?")) return;
 
-      const salesMap = {};
-      if (activeShift.orders) {
-        Object.values(activeShift.orders).forEach(order => {
+  const updatePromises = [];
+  
+  // Ma'lumotlarni bazadan o'qiymiz
+  onValue(ref(db, 'menu'), (snapshot) => {
+    const menuData = snapshot.val();
+    if (!menuData) return;
+
+    const salesMap = {};
+    // ENDI XATOLIK BERMAYDI (?. operatori bilan himoyaladik)
+    if (activeShift?.orders) {
+      Object.values(activeShift.orders).forEach(order => {
+        if (order.items) {
           order.items.forEach(item => {
             salesMap[item.id] = (salesMap[item.id] || 0) + item.qty;
           });
-        });
-      }
-
-['shirinliklar', 'ichimliklar', 'qutilar'].forEach(cat => {
-  if (menuData[cat]) {
-    Object.keys(menuData[cat]).forEach(id => {
-            const item = menuData[cat][id];
-            const oldStock = Number(item.stock || 0);
-            const kirim = Number(item.kirim || 0);
-            const chiqim = salesMap[id] || 0;
-            const newStock = (oldStock + kirim) - chiqim;
-
-            updatePromises.push(set(ref(db, `menu/${cat}/${id}`), { 
-              ...item, 
-              stock: newStock, 
-              kirim: 0 
-            }));
-          });
         }
       });
+    }
 
-      Promise.all(updatePromises).then(() => {
-        let dayTotalRevenue = 0;
-        if (activeShift.orders) { Object.keys(activeShift.orders).forEach(key => dayTotalRevenue += activeShift.orders[key].totalPrice || 0); }
-        const archiveId = `shift_${Date.now()}`;
-        
-        set(ref(db, `past_shifts/${archiveId}`), { ...activeShift, totalRevenue: dayTotalRevenue, orders: activeShift.orders || {} })
-          .then(() => { 
-            remove(ref(db, 'active_shift')); 
-            setActiveShift(null);
-            alert("Kun yakunlandi, qoldiqlar yangilandi!");
-          });
-      });
-    }, { onlyOnce: true });
-  };
+    ['shirinliklar', 'ichimliklar', 'qutilar'].forEach(cat => {
+      if (menuData[cat]) {
+        Object.keys(menuData[cat]).forEach(id => {
+          const item = menuData[cat][id];
+          const oldStock = Number(item.stock || 0);
+          const kirim = Number(item.kirim || 0);
+          const chiqim = salesMap[id] || 0;
+          const newStock = (oldStock + kirim) - chiqim;
 
+          updatePromises.push(set(ref(db, `menu/${cat}/${id}`), { 
+            ...item, 
+            stock: newStock, 
+            kirim: 0,
+            chiqim: 0 // Chiqimni ham tozalab qo'yamiz
+          }));
+        });
+      }
+    });
+
+    Promise.all(updatePromises).then(() => {
+      let dayTotalRevenue = 0;
+      if (activeShift.orders) { 
+        Object.keys(activeShift.orders).forEach(key => dayTotalRevenue += activeShift.orders[key].totalPrice || 0); 
+      }
+      const archiveId = `shift_${Date.now()}`;
+      
+      set(ref(db, `past_shifts/${archiveId}`), { ...activeShift, totalRevenue: dayTotalRevenue })
+        .then(() => { 
+          remove(ref(db, 'active_shift')); 
+          setActiveShift(null);
+          alert("Kun yakunlandi!");
+        });
+    });
+  }, { onlyOnce: true });
+};
   const closeModal = () => {
     setIsMenuModalOpen(false);
     setEditingOrderKey(null);
@@ -318,6 +377,7 @@ basket.forEach((item) => {
                         }}>
                           {order.paymentMethod || 'Naqd'}
                         </span>
+
                       </div>
 
                       <div style={{ marginBottom: '10px' }}>
@@ -328,17 +388,62 @@ basket.forEach((item) => {
                           </div>
                         ))}
                       </div>
-                      
-                      <div style={{ 
-                        marginTop: '10px', 
-                        paddingTop: '10px', 
-                        borderTop: '1px solid rgba(255,255,255,0.1)',
-                        fontWeight: 'bold', 
-                        color: '#ffb703',
-                        textAlign: 'right'
-                      }}>
-                        {order.totalPrice?.toLocaleString()} so'm
-                      </div>
+ <div style={{ 
+  marginTop: '10px', 
+  paddingTop: '10px', 
+  borderTop: '1px solid rgba(255,255,255,0.1)',
+  display: 'flex',              // Tugmalar va narxni bir qatorga qo'yadi
+  justifyContent: 'space-between', // Tugmalar chapda, narx o'ngda bo'ladi
+  alignItems: 'center',         // Vertikal markazlashtiradi
+  gap: '10px'
+}}>
+  {/* Chap tomon: Tugmalar */}
+  <div style={{ display: 'flex', gap: '8px' }}>
+    <button 
+      onClick={() => handleEditClick(key, order)}
+      style={{ 
+        background: 'rgba(255,183,3,0.1)', 
+        border: '1px solid #ffb703', 
+        color: '#ffb703', 
+        padding: '5px 12px', 
+        borderRadius: '8px', 
+        cursor: 'pointer',
+        fontSize: '12px',
+        fontWeight: '600'
+      }}
+    >
+      ✏️ Edit
+    </button>
+    
+    <button 
+      onClick={() => handleDeleteOrder(key, order)}
+      style={{ 
+        background: 'rgba(239, 68, 68, 0.1)', 
+        border: '1px solid #ef4444', 
+        color: '#ef4444', 
+        padding: '5px 12px', 
+        borderRadius: '8px', 
+        cursor: 'pointer',
+        fontSize: '12px',
+        fontWeight: '600'
+      }}
+    >
+      🗑️ Del
+    </button>
+  </div>
+
+  {/* O'ng tomon: Narx */}
+  <div style={{ 
+    fontSize: '15px', 
+    fontWeight: 'bold', 
+    color: '#fff',
+    background: 'rgba(255,255,255,0.05)',
+    padding: '4px 10px',
+    borderRadius: '8px'
+  }}>
+    {order.totalPrice?.toLocaleString()} so'm
+  </div>
+</div>
                     </div>
                   );
                 })}

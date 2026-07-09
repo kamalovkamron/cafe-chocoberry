@@ -79,7 +79,8 @@ export default function Prixod() {
 
   const renderTableRows = (categoryName) => {
     return inventory
-      .filter(item => item.category === categoryName && item.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      .filter(item => item.category === categoryName) // Qidiruvni table ichida alohida ishlatamiz
+      .filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
       .map((item, index) => {
         const ostatok = Number(item.stock || 0);
         const kirim = Number(item.kirim || 0);
@@ -138,8 +139,13 @@ export default function Prixod() {
           <tbody>
             <tr><td colSpan="5" style={{ color: '#ffb703', fontWeight: 'bold', paddingTop: '20px' }}>SHIRINLIKLAR</td></tr>
             {renderTableRows('shirinliklar')}
+            
             <tr><td colSpan="5" style={{ color: '#ffb703', fontWeight: 'bold', paddingTop: '20px' }}>ICHIMLIKLAR</td></tr>
             {renderTableRows('ichimliklar')}
+
+            {/* 📬 QUTILAR BO'LIMI INTEGRATSIYASI */}
+            <tr><td colSpan="5" style={{ color: '#ffb703', fontWeight: 'bold', paddingTop: '20px' }}>QUTILAR</td></tr>
+            {renderTableRows('qutilar')}
           </tbody>
         </table>
       </div>
